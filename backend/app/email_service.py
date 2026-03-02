@@ -2,10 +2,12 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-# ✅ Put your Gmail credentials here
-SENDER_EMAIL = "p68223595@gmail.com"
-SENDER_PASSWORD = "glio ahal lepr ubxy"  # App password (spaces OK)
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
+SENDER_EMAIL    = os.getenv("SENDER_EMAIL")
+SENDER_PASSWORD = os.getenv("SENDER_PASSWORD")
 
 def send_alert_confirmation(
     to_email: str,

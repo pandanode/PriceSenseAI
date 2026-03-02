@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+selenium
+webdriver-manager
+beautifulsoup4
+mysql-connector-python
+tensorflow
+scikit-learn
+pandas
+numpy
+apscheduler
+python-dotenv
+requests

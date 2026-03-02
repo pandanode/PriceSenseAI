@@ -1,11 +1,15 @@
+import os
 import mysql.connector
+from dotenv import load_dotenv
 from datetime import datetime
 
+load_dotenv()
+
 DB_CONFIG = {
-    "host": "localhost",
-    "user": "root",
-    "password": "porsche718~1!@",  # ← change this
-    "database": "pricesenseai"
+    "host":     os.getenv("DB_HOST", "localhost"),
+    "user":     os.getenv("DB_USER", "root"),
+    "password": os.getenv("DB_PASSWORD", ""),
+    "database": os.getenv("DB_NAME", "pricesenseai")
 }
 
 def get_connection():
@@ -13,11 +17,9 @@ def get_connection():
 
 
 def save_price(product_name: str, platform: str, price: float, url: str):
-    """Save scraped price to price_history table"""
     conn = get_connection()
     cursor = conn.cursor()
 
-    # Get or create product
     cursor.execute("SELECT id FROM products WHERE name = %s", (product_name,))
     row = cursor.fetchone()
 
@@ -30,7 +32,6 @@ def save_price(product_name: str, platform: str, price: float, url: str):
         )
         product_id = cursor.lastrowid
 
-    # Save price record
     cursor.execute(
         "INSERT INTO price_history (product_id, platform, price) VALUES (%s, %s, %s)",
         (product_id, platform, price)
@@ -43,7 +44,6 @@ def save_price(product_name: str, platform: str, price: float, url: str):
 
 
 def get_price_history(product_id: int):
-    """Get all historical prices for a product"""
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
     cursor.execute(
@@ -61,11 +61,9 @@ def get_price_history(product_id: int):
 
 
 def save_alert(email: str, product_id: int, target_price: float):
-    """Save a price drop alert for a user"""
     conn = get_connection()
     cursor = conn.cursor()
 
-    # Get or create user
     cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
     row = cursor.fetchone()
     if row:
@@ -74,7 +72,6 @@ def save_alert(email: str, product_id: int, target_price: float):
         cursor.execute("INSERT INTO users (email) VALUES (%s)", (email,))
         user_id = cursor.lastrowid
 
-    # Save alert
     cursor.execute(
         "INSERT INTO alerts (user_id, product_id, target_price) VALUES (%s, %s, %s)",
         (user_id, product_id, target_price)
