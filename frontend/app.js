@@ -3,8 +3,7 @@
    All JavaScript logic
 ═══════════════════════════════════════════ */
 
-const API = "https://z9r8wa2k.up.railway.app";
-
+const API = "http://127.0.0.1:8000";
 // State
 let currentProduct = null;
 let currentBestPrice = null;
