@@ -1,4 +1,5 @@
 import re
+import os
 import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -10,9 +11,8 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 # -------------------------------------------------------
 # MINIMUM PRICE FILTER
-# Change this to 100 for paperbacks, 500 for textbooks
 # -------------------------------------------------------
-MIN_PRICE = 100  # ₹ — set to 5000 if you only want expensive textbooks
+MIN_PRICE = 100  # ₹
 
 
 # -------------------------------------------------------
@@ -27,15 +27,6 @@ def create_driver():
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-gpu")
     options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_experimental_option("excludeSwitches", ["enable-automation"])
-    options.add_experimental_option("useAutomationExtension", False)
-options.add_argument("--disable-gpu")
-options.add_argument("--remote-debugging-port=9222")
-import os
-if os.path.exists("/usr/bin/chromium"):
-    options.binary_location = "/usr/bin/chromium"
-elif os.path.exists("/usr/bin/chromium-browser"):
-    options.binary_location = "/usr/bin/chromium-browser"
     options.add_argument("--window-size=1920,1080")
     options.add_argument("--remote-debugging-port=9222")
     options.add_argument(
@@ -43,9 +34,10 @@ elif os.path.exists("/usr/bin/chromium-browser"):
         "AppleWebKit/537.36 (KHTML, like Gecko) "
         "Chrome/122.0.0.0 Safari/537.36"
     )
+    options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    options.add_experimental_option("useAutomationExtension", False)
 
-    # ✅ Check if running on Railway/Linux server
-    import os
+    # ✅ Railway/Linux Chrome path detection
     if os.path.exists("/usr/bin/chromium"):
         options.binary_location = "/usr/bin/chromium"
     elif os.path.exists("/usr/bin/chromium-browser"):
@@ -68,10 +60,6 @@ elif os.path.exists("/usr/bin/chromium-browser"):
 # -------------------------------------------------------
 
 def is_relevant(title: str, product_name: str) -> bool:
-    """
-    Whole-word matching for numbers so '15' won't match '15th edition'.
-    At least 60% of keywords must appear in title.
-    """
     if not title or title == "N/A":
         return False
 
@@ -91,13 +79,11 @@ def is_relevant(title: str, product_name: str) -> bool:
 
 
 # -------------------------------------------------------
-# AMAZON SCRAPER (Books category)
+# AMAZON SCRAPER
 # -------------------------------------------------------
 
 def scrape_amazon(book_name: str, driver):
-    """Scrape best matching book from Amazon India — Books category"""
     try:
-        # ✅ n=976389031 = Amazon.in Books category
         url = f"https://www.amazon.in/s?k={book_name.replace(' ', '+')}&rh=n%3A976389031"
         driver.get(url)
 
@@ -113,14 +99,12 @@ def scrape_amazon(book_name: str, driver):
         )
 
         for result in results[:15]:
-            # Title
             title = "N/A"
             try:
                 title = result.find_element(By.CSS_SELECTOR, "h2").text.strip()
             except:
                 pass
 
-            # Price
             try:
                 price_text = result.find_element(
                     By.CSS_SELECTOR, "span.a-price-whole"
@@ -136,7 +120,6 @@ def scrape_amazon(book_name: str, driver):
                 print(f"   ⚠️  Amazon skipping: {title[:65]}")
                 continue
 
-            # URL
             product_url = "N/A"
             try:
                 link = result.find_element(By.CSS_SELECTOR, "a.a-link-normal.s-no-outline")
@@ -154,17 +137,15 @@ def scrape_amazon(book_name: str, driver):
 
 
 # -------------------------------------------------------
-# FLIPKART SCRAPER (Books)
+# FLIPKART SCRAPER
 # -------------------------------------------------------
 
 def scrape_flipkart(book_name: str, driver):
-    """Scrape best matching book from Flipkart"""
     try:
         url = f"https://www.flipkart.com/search?q={book_name.replace(' ', '+')}&category=bks"
         driver.get(url)
         time.sleep(4)
 
-        # Close login popup
         for xpath in [
             "//button[contains(text(),'✕')]",
             "//button[contains(@class,'_2KpZ6l')]",
@@ -179,11 +160,9 @@ def scrape_flipkart(book_name: str, driver):
             except:
                 continue
 
-        # ✅ Confirmed title class from debug
         title_elements = driver.find_elements(By.XPATH, "//a[contains(@class,'pIpigb')]")
 
         for title_el in title_elements[:15]:
-            # Title
             title = "N/A"
             try:
                 title = title_el.text.strip()
@@ -193,7 +172,6 @@ def scrape_flipkart(book_name: str, driver):
             if not title or title == "N/A":
                 continue
 
-            # ✅ Price — find nearest hZ3P6w after this title
             price = None
             try:
                 price_text = title_el.find_element(
@@ -210,7 +188,6 @@ def scrape_flipkart(book_name: str, driver):
                 print(f"   ⚠️  Flipkart skipping: {title[:65]}")
                 continue
 
-            # URL
             product_url = "N/A"
             try:
                 href = title_el.get_attribute("href")
@@ -227,14 +204,13 @@ def scrape_flipkart(book_name: str, driver):
         print(f"[Flipkart Error] {e}")
         return None
 
+
 # -------------------------------------------------------
-# SNAPDEAL SCRAPER (Books)
+# SNAPDEAL SCRAPER
 # -------------------------------------------------------
 
 def scrape_snapdeal(book_name: str, driver):
-    """Scrape best matching book from Snapdeal"""
     try:
-        # ✅ Snapdeal Books category URL
         url = f"https://www.snapdeal.com/search?keyword={book_name.replace(' ', '%20')}&santizedKeyword=&catId=1151&categoryId=1151&suggested=false&vertical=books&noOfResults=20&sort=rlvncy"
         driver.get(url)
 
@@ -246,13 +222,11 @@ def scrape_snapdeal(book_name: str, driver):
         results = driver.find_elements(By.CSS_SELECTOR, "div.product-tuple-listing")
 
         for result in results[:15]:
-            # Title
             try:
                 title = result.find_element(By.CSS_SELECTOR, "p.product-title").text.strip()
             except:
                 continue
 
-            # Price — use confirmed class from debug
             try:
                 price_text = result.find_element(
                     By.CSS_SELECTOR, "span.product-price"
@@ -271,7 +245,6 @@ def scrape_snapdeal(book_name: str, driver):
                 print(f"   ⚠️  Snapdeal skipping: {title[:65]}")
                 continue
 
-            # URL
             product_url = "N/A"
             try:
                 link = result.find_element(By.CSS_SELECTOR, "a.dp-widget-link")
@@ -289,40 +262,33 @@ def scrape_snapdeal(book_name: str, driver):
 
 
 # -------------------------------------------------------
-# MAIN COMPARISON FUNCTION
+# MAIN FUNCTION
 # -------------------------------------------------------
 
 def get_all_prices(book_name: str):
-    """
-    Search all 3 platforms for a book and return price comparison.
-    This is the main function called by FastAPI.
-    """
     print(f"\n📚 Searching for: {book_name}")
-    print("⏳ Opening browser... (this takes ~10 seconds)\n")
+    print("⏳ Opening browser...\n")
 
     driver = create_driver()
     results = []
 
     try:
-        # Amazon
         amazon_data = scrape_amazon(book_name, driver)
-        if amazon_data and amazon_data["price"]:
+        if amazon_data:
             results.append(amazon_data)
             print(f"✅ Amazon   : ₹{amazon_data['price']:,.0f} — {amazon_data['title'][:60]}")
         else:
             print("❌ Amazon   : No result found")
 
-        # Flipkart
         flipkart_data = scrape_flipkart(book_name, driver)
-        if flipkart_data and flipkart_data["price"]:
+        if flipkart_data:
             results.append(flipkart_data)
             print(f"✅ Flipkart : ₹{flipkart_data['price']:,.0f} — {flipkart_data['title'][:60]}")
         else:
             print("❌ Flipkart : No result found")
 
-        # Snapdeal
         snapdeal_data = scrape_snapdeal(book_name, driver)
-        if snapdeal_data and snapdeal_data["price"]:
+        if snapdeal_data:
             results.append(snapdeal_data)
             print(f"✅ Snapdeal : ₹{snapdeal_data['price']:,.0f} — {snapdeal_data['title'][:60]}")
         else:
@@ -331,7 +297,6 @@ def get_all_prices(book_name: str):
     finally:
         driver.quit()
 
-    # Summary
     print("\n" + "=" * 55)
     if results:
         best = min(results, key=lambda x: x["price"])
@@ -339,17 +304,11 @@ def get_all_prices(book_name: str):
         saving = worst["price"] - best["price"]
         print(f"🏆 Best Deal : {best['platform']} at ₹{best['price']:,.0f}")
         print(f"💰 You Save  : ₹{saving:,.0f} vs {worst['platform']}")
-        print(f"🔗 Link      : {best['url'][:80]}")
     else:
-        print("⚠️  No results found. Try lowering MIN_PRICE or a different book title.")
+        print("⚠️  No results found.")
 
     return results
 
 
-# -------------------------------------------------------
-# TEST — Try a popular textbook
-# -------------------------------------------------------
-
 if __name__ == "__main__":
-    # Test with a well-known book — change to any book you like!
     get_all_prices("Python Crash Course")
