@@ -28,6 +28,13 @@ def create_driver():
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
     options.add_experimental_option("useAutomationExtension", False)
+options.add_argument("--disable-gpu")
+options.add_argument("--remote-debugging-port=9222")
+import os
+if os.path.exists("/usr/bin/chromium"):
+    options.binary_location = "/usr/bin/chromium"
+elif os.path.exists("/usr/bin/chromium-browser"):
+    options.binary_location = "/usr/bin/chromium-browser"
     options.add_argument("--window-size=1920,1080")
     options.add_argument(
         "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
