@@ -5,4 +5,5 @@ __pycache__/
 *.keras
 *.pkl
 flipkart_page.html
-snapdeal_page.html
+snapdeal_page.htmlcd C:/Users/user/Documents/GitHub/PriceSenseAI/backend/app
+uvicorn main:app --reload
