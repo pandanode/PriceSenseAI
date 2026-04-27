@@ -12,7 +12,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 # -------------------------------------------------------
 # MINIMUM PRICE FILTER
 # -------------------------------------------------------
-MIN_PRICE = 100  # ₹
+MIN_PRICE = 1  # ₹
 
 
 # -------------------------------------------------------
@@ -75,16 +75,16 @@ def is_relevant(title: str, product_name: str) -> bool:
             if word in title_lower:
                 matched += 1
 
-    return (matched / len(keywords)) >= 0.6
+    return (matched / len(keywords)) >= 0.4
 
 
 # -------------------------------------------------------
 # AMAZON SCRAPER
 # -------------------------------------------------------
 
-def scrape_amazon(book_name: str, driver):
+def scrape_amazon(product_name: str, driver):
     try:
-        url = f"https://www.amazon.in/s?k={book_name.replace(' ', '+')}&rh=n%3A976389031"
+        url = f"https://www.amazon.in/s?k={book_name.replace(' ', '+')}"
         driver.get(url)
 
         WebDriverWait(driver, 15).until(
@@ -116,7 +116,7 @@ def scrape_amazon(book_name: str, driver):
             if price < MIN_PRICE:
                 continue
 
-            if not is_relevant(title, book_name):
+            if not is_relevant(title, product_name):
                 print(f"   ⚠️  Amazon skipping: {title[:65]}")
                 continue
 
@@ -140,9 +140,9 @@ def scrape_amazon(book_name: str, driver):
 # FLIPKART SCRAPER
 # -------------------------------------------------------
 
-def scrape_flipkart(book_name: str, driver):
+def scrape_flipkart(product_name: str, driver):
     try:
-        url = f"https://www.flipkart.com/search?q={book_name.replace(' ', '+')}&category=bks"
+        url = f"https://www.flipkart.com/search?q={book_name.replace(' ', '+')}"
         driver.get(url)
         time.sleep(4)
 
@@ -209,9 +209,9 @@ def scrape_flipkart(book_name: str, driver):
 # SNAPDEAL SCRAPER
 # -------------------------------------------------------
 
-def scrape_snapdeal(book_name: str, driver):
+def scrape_snapdeal(product_name: str, driver):
     try:
-        url = f"https://www.snapdeal.com/search?keyword={book_name.replace(' ', '%20')}&santizedKeyword=&catId=1151&categoryId=1151&suggested=false&vertical=books&noOfResults=20&sort=rlvncy"
+        url = f"https://www.snapdeal.com/search?keyword={book_name.replace(' ', '%20')}"
         driver.get(url)
 
         WebDriverWait(driver, 15).until(
@@ -265,7 +265,7 @@ def scrape_snapdeal(book_name: str, driver):
 # MAIN FUNCTION
 # -------------------------------------------------------
 
-def get_all_prices(book_name: str):
+def get_all_prices(product_name: str):
     print(f"\n📚 Searching for: {book_name}")
     print("⏳ Opening browser...\n")
 
@@ -311,4 +311,8 @@ def get_all_prices(book_name: str):
 
 
 if __name__ == "__main__":
+<<<<<<< Updated upstream
     get_all_prices("Python Crash Course")
+=======
+    get_all_prices("Python Crash Course")
+>>>>>>> Stashed changes
