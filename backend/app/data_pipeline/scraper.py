@@ -311,8 +311,8 @@ def get_all_prices(product_name: str):
 
 
 if __name__ == "__main__":
-<<<<<<< Updated upstream
+
     get_all_prices("Python Crash Course")
-=======
+
     get_all_prices("Python Crash Course")
->>>>>>> Stashed changes
+
